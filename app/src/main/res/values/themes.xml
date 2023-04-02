@@ -25,6 +25,14 @@
         <item name="android:windowFrame">@null</item>
         <item name="android:windowContentOverlay">@null</item>
 
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+        <item name="android:windowSoftInputMode">stateAlwaysHidden</item>
+        <item name="android:windowMinWidthMajor">100%</item>
+        <item name="android:windowMinWidthMinor">100%</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+
     </style>
 
     <style name="MyNumberPickerStyle">
