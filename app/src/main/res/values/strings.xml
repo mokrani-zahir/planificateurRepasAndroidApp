@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">MiniProjetTPAndroid</string>
+    <string-array name="spinner_items">
+        <item>kg</item>
+        <item>g</item>
+        <item>mg</item>
+        <item>l</item>
+        <item>cl</item>
+        <item>ml</item>
+    </string-array>
 </resources>

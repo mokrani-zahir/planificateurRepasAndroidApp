@@ -20,104 +20,48 @@ import com.shawnlin.numberpicker.NumberPicker;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+public class Plat extends AppCompatActivity {
 
-public class MainActivity extends AppCompatActivity {
-
-    LinearLayout btnDim, btnLun, btnMar, btnMer, btnJed, btnVen, btnSam, btnAdd, listJour,selected;
-    String TAG = "app";
-    ListView listRepas;
-    ArrayList<ListRepas> Items;
-    MyCustomAdapter myadpter;
+    TextView titleRepas,heurRepas;
+    LinearLayout editRepas,btnAdd,listJour,selected;
+    ArrayList<ListPlat> Items;
+    CustomAdapter myadpter;
+    ListView listPlat;
+    Bundle extras;
     int numeroJour;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_plat);
 
-        btnDim = (LinearLayout) findViewById(R.id.btnDim);
-        btnLun = (LinearLayout) findViewById(R.id.btnLun);
-        btnMar = (LinearLayout) findViewById(R.id.btnMar);
-        btnMer = (LinearLayout) findViewById(R.id.btnMer);
-        btnJed = (LinearLayout) findViewById(R.id.btnJed);
-        btnVen = (LinearLayout) findViewById(R.id.btnVen);
-        btnSam = (LinearLayout) findViewById(R.id.btnSam);
+        titleRepas = (TextView) findViewById(R.id.titre_repas_edit);
+        heurRepas = (TextView) findViewById(R.id.heur_reap_edit);
         btnAdd = (LinearLayout) findViewById(R.id.btnAdd);
-        numeroJour = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) -1;
+        editRepas = (LinearLayout) findViewById(R.id.edit_repas);
 
-        //pour selection le jour et changer sont background pour affichier au utlisateur
         listJour = (LinearLayout) findViewById(R.id.list_jour);
+
+
+        extras = getIntent().getExtras();
+
+        titleRepas.setText(extras.getString("title"));
+        heurRepas.setText(extras.getString("heur"));
+        numeroJour = Integer.parseInt(extras.getString("jour"));
         selected = (LinearLayout) listJour.getChildAt(numeroJour);
         selected.setBackgroundResource(R.drawable.button_background_primary);
 
         //configuration de listview
-        Items = new ArrayList<ListRepas>();
-        listRepas = (ListView) findViewById(R.id.list_repas);
+        Items = new ArrayList<ListPlat>();
+        listPlat = (ListView) findViewById(R.id.list_repas);
 
-        myadpter = new MyCustomAdapter(Items);
-        listRepas.setAdapter(myadpter);
+        myadpter = new CustomAdapter(Items);
+        listPlat.setAdapter(myadpter);
+
 
         //charger les repas dant la base de donnée et affichier dant listView
         setListView();
 
-
-        btnDim.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeSelectionJour(btnDim);
-                Log.i(TAG,"Clicke");
-            }
-        });
-
-        btnLun.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeSelectionJour(btnLun);
-                btnLun.setBackgroundResource(R.drawable.button_background_primary);
-                Log.i(TAG,"Clicke");
-            }
-        });
-
-        btnMar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeSelectionJour(btnMar);
-                Log.i(TAG,"Clicke");
-            }
-        });
-
-        btnMer.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeSelectionJour(btnMer);
-                Log.i(TAG,"Clicke");
-            }
-        });
-
-        btnJed.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeSelectionJour(btnJed);
-                Log.i(TAG,"Clicke");
-            }
-        });
-
-        btnVen.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeSelectionJour(btnVen);
-                Log.i(TAG,"Clicke");
-            }
-        });
-
-        btnSam.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeSelectionJour(btnSam);
-                Log.i(TAG,"Clicke");
-            }
-        });
 
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,23 +69,25 @@ public class MainActivity extends AppCompatActivity {
                 openDialog();
             }
         });
-    }
 
-    private void changeSelectionJour(LinearLayout element){
-        int count = listJour.getChildCount();
-        for (int i = 0; i < count; i++) {
-            LinearLayout linearLaouyJour = (LinearLayout) listJour.getChildAt(i);
-            linearLaouyJour.setBackgroundResource(R.drawable.surface_label_background);
-            // faire quelque chose avec la vue ici
-        }
-        element.setBackgroundResource(R.drawable.button_background_primary);
-        numeroJour = listJour.indexOfChild(element);
+        editRepas.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String[] heur = extras.getString("heur").split(":");
+                openDialog(
+                        extras.getString("title"),
+                        Integer.parseInt(heur[0]),
+                        Integer.parseInt(heur[1])
+                );
+            }
+        });
+
     }
 
     private void openDialog(){
         int heurUtilisateur = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         int minutUtilisateur = Calendar.getInstance().get(Calendar.MINUTE);
-        Dialog dialog = new Dialog(MainActivity.this,R.style.Dialog_Custom);
+        Dialog dialog = new Dialog(Plat.this,R.style.Dialog_Custom);
         dialog.setContentView(R.layout.dialog_repas);
 
         EditText nomRepas = (EditText) dialog.findViewById(R.id.edittext_add_repa);
@@ -154,9 +100,9 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        amOrpm.setMaxValue(1);
+        amOrpm.setMaxValue(0);
         amOrpm.setMinValue(0);
-        String[] textValues = {"AM", "PM"};
+        String[] textValues = {"Min"};
         amOrpm.setDisplayedValues(textValues);
 
         heur.setValue(heurUtilisateur);
@@ -173,8 +119,46 @@ public class MainActivity extends AppCompatActivity {
                 linear_edite_text.setBackgroundResource(R.drawable.edit_background_red);
                 return;
             }
-            Items.add(new ListRepas(nomRepas.getText().toString(),heur.getValue()+":"+minut.getValue()));
+            Items.add(new ListPlat(nomRepas.getText().toString(),heur.getValue()+":"+minut.getValue()));
             myadpter.notifyDataSetChanged();
+            dialog.dismiss();
+        });
+    }
+
+    //donne cette method en a busoi seulement ID de element puis enva recuper dant la base de donnée
+    //Donc apre il sura private void openDialog(int identifiant)
+
+    private void openDialog(String nom,int heurs,int minuts){
+        Dialog dialog = new Dialog(Plat.this,R.style.Dialog_Custom);
+        dialog.setContentView(R.layout.dialog_repas);
+
+        EditText nomRepas = (EditText) dialog.findViewById(R.id.edittext_add_repa);
+        NumberPicker heur = (NumberPicker)dialog.findViewById(R.id.edit_repas_heur);
+        NumberPicker minut = (NumberPicker)dialog.findViewById(R.id.edit_repas_min);
+        NumberPicker amOrpm = (NumberPicker)dialog.findViewById(R.id.edit_repas_ampm);
+        LinearLayout save = (LinearLayout)dialog.findViewById(R.id.save_add_repa);
+        LinearLayout close = (LinearLayout)dialog.findViewById(R.id.close_add_repa);
+        LinearLayout linear_edite_text = (LinearLayout)dialog.findViewById(R.id.linear_edite_text);
+        TextView titreDialog = (TextView)dialog.findViewById(R.id.textView_repas);
+        titreDialog.setText("Modifier le repas");
+        nomRepas.setText(nom);
+
+        amOrpm.setMaxValue(1);
+        amOrpm.setMinValue(0);
+        String[] textValues = {"AM", "PM"};
+        amOrpm.setDisplayedValues(textValues);
+
+        heur.setValue(heurs);
+        minut.setValue(minuts);
+
+        dialog.show();
+
+        close.setOnClickListener(v1 -> {
+            dialog.dismiss();
+        });
+
+        save.setOnClickListener(v1 -> {
+            Toast.makeText(Plat.this,"La modification est bien fait",3000);
             dialog.dismiss();
         });
     }
@@ -183,17 +167,16 @@ public class MainActivity extends AppCompatActivity {
     //cet Method doit etre modifier et adapte pour la base de donnée
     // enva fair un information fausse
     public void setListView(){
-        Items.add(new ListRepas("Matin","07:00"));
-        Items.add(new ListRepas("Midi","12:00"));
-        Items.add(new ListRepas("Collation","16:00"));
-        Items.add(new ListRepas("Soir","19:00"));
+        Items.add(new ListPlat("Lait au chocalate","5 min"));
+        Items.add(new ListPlat("Croissant","30 min"));
+        Items.add(new ListPlat("Confiture à la frais","50 min"));
         myadpter.notifyDataSetChanged();
     }
 
-    class MyCustomAdapter extends BaseAdapter{
+    class CustomAdapter extends BaseAdapter {
 
-        ArrayList<ListRepas> Items = new ArrayList<ListRepas>();
-        MyCustomAdapter(ArrayList<ListRepas> Items){
+        ArrayList<ListPlat> Items = new ArrayList<ListPlat>();
+        CustomAdapter(ArrayList<ListPlat> Items){
             this.Items = Items;
         }
 
@@ -217,16 +200,16 @@ public class MainActivity extends AppCompatActivity {
             View view = getLayoutInflater().inflate(R.layout.item_edit_remove,null);
 
             TextView title = (TextView) view.findViewById(R.id.tilte_item);
-            TextView heur = (TextView) view.findViewById(R.id.label_time_item);
+            TextView duree = (TextView) view.findViewById(R.id.label_time_item);
             LinearLayout btnEdit = (LinearLayout) view.findViewById(R.id.edit_item);
             LinearLayout btnRemove = (LinearLayout) view.findViewById(R.id.remove_item);
 
             btnEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent activityPlat = new Intent(MainActivity.this,Plat.class);
+                    Intent activityPlat = new Intent(Plat.this,Ingridiant.class);
                     activityPlat.putExtra("title",title.getText().toString());
-                    activityPlat.putExtra("heur",heur.getText().toString());
+                    activityPlat.putExtra("duree",duree.getText().toString());
                     activityPlat.putExtra("jour",String.valueOf(numeroJour));
                     startActivity(activityPlat);
                 }
@@ -237,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     Items.remove(position);
                     myadpter.notifyDataSetChanged();
-                    Toast.makeText(MainActivity.this,"Element est bien suppermier",3000).show();
+                    Toast.makeText(Plat.this,"Element est bien suppermier",3000).show();
                 }
             });
 
@@ -246,12 +229,12 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     Items.remove(position);
                     myadpter.notifyDataSetChanged();
-                    Toast.makeText(MainActivity.this,"Element est bien suppermier",3000).show();
+                    Toast.makeText(Plat.this,"Element est bien suppermier",3000).show();
                 }
             });
 
             title.setText(Items.get(position).name);
-            heur.setText(Items.get(position).heur);
+            duree.setText(Items.get(position).duree);
             myadpter.notifyDataSetChanged();
 
             return view;

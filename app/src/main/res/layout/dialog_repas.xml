@@ -137,8 +137,6 @@
             app:np_dividerDistance="0dp"
             app:np_dividerLength="0dp"
             app:np_itemSpacing="0dp"
-            app:np_max="2"
-            app:np_min="0"
             app:np_selectedTextColor="@color/white"
             app:np_selectedTextSize="24dp"
             app:np_textColor="#1AFFFFFF"
