@@ -53,7 +53,7 @@ public class Ingridiant extends AppCompatActivity {
         extras = getIntent().getExtras();
 
         titleRepas.setText(extras.getString("title"));
-        heurRepas.setText(extras.getString("duree"));
+        heurRepas.setText("Durée : "+extras.getString("duree")+ " Min");
         idPlat = Integer.parseInt(extras.getString("id"));
 
         selected = (LinearLayout) listJour.getChildAt(Integer.parseInt(extras.getString("jour")));
@@ -81,15 +81,20 @@ public class Ingridiant extends AppCompatActivity {
         editRepas.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String[] heur = extras.getString("duree").split(":");
+                String duree = extras.getString("duree");
                 openDialogPlat(
                         extras.getString("title").toString(),
-                        Integer.parseInt(heur[0]),
-                        Integer.parseInt(heur[1])
+                        Integer.parseInt(duree)
                 );
             }
         });
 
+    }
+
+    @Override
+    protected void onStart () {
+        super.onStart();
+        setListView();
     }
 
     /**
@@ -230,7 +235,7 @@ public class Ingridiant extends AppCompatActivity {
         dialog.show();
     }
 
-    private void openDialogPlat(String nom,int heurs,int minuts){
+    private void openDialogPlat(String nom,int duree){
         Dialog dialog = new Dialog(Ingridiant.this,R.style.Dialog_Custom);
         dialog.setContentView(R.layout.dialog_repas);
 
@@ -244,6 +249,9 @@ public class Ingridiant extends AppCompatActivity {
         TextView titreDialog = (TextView)dialog.findViewById(R.id.textView_repas);
         titreDialog.setText("Modifier le plat");
 
+        int minuts = duree % 60;
+        int heurs = duree / 60;
+
         nomRepas.setText(extras.getString("title"));
         heur.setValue(heurs);
         minut.setValue(minuts);
@@ -252,8 +260,6 @@ public class Ingridiant extends AppCompatActivity {
         amOrpm.setMinValue(0);
         String[] textValues = {"Min"};
         amOrpm.setDisplayedValues(textValues);
-
-        int minutTotal = heur.getValue()*60+minut.getValue();
 
         dialog.show();
 
@@ -264,13 +270,15 @@ public class Ingridiant extends AppCompatActivity {
         save.setOnClickListener(v1 -> {
             Toast.makeText(Ingridiant.this,"La modification est bien fait",Toast.LENGTH_LONG);
 
+            int minutTotal = heur.getValue()*60+minut.getValue();
+
             titleRepas.setText(nomRepas.getText().toString());
-            heurRepas.setText(heur.getValue()+":"+minut.getValue());
+            heurRepas.setText("Durée : " + minutTotal + " Min");
 
             Platt r = new Platt(
                     idPlat,
                     nomRepas.getText().toString(),
-                    heur.getValue()+":"+minut.getValue()
+                    minutTotal
             );
             b.modifierPlat(r);
 
@@ -286,7 +294,6 @@ public class Ingridiant extends AppCompatActivity {
      * chercher ingridiant de plat dant bas de donnée et affichier dant la listView
      *
      * @version 0.1
-     * @param id identifiant de plat (SELECT * FROM ingridiant WHERE idPlat='id')
      * @return void puis ecreer une boucle ajouter a la arry list puis affichier
      */
     public void setListView(){
@@ -315,46 +322,6 @@ public class Ingridiant extends AppCompatActivity {
         Log.e("salim", String.valueOf(Items.size()));
 
         myadpter.notifyDataSetChanged();
-    }
-
-
-    /**
-     * Ajouter ingridiant au plat dant la base de donnée
-     *
-     * @version 0.1
-     * @param nom Nome de plat
-     * @param quantity Quantité de ingridiant
-     * @param unity Unité de mesure
-     * @param idPlat identifiant de plat a associer (Clé etrangere)
-     * @return void puis ecreer une boucle ajouter a la arry list puis affichier
-     */
-    public void putIngridiant(String nom,int quantity,String unity,int idPlat){
-        //Items.add(new ListIngridiant(nom,quantity,unity));
-        myadpter.notifyDataSetChanged();
-        Toast.makeText(Ingridiant.this,"Ingrediant est bien ajouter",Toast.LENGTH_LONG);
-    }
-
-    /**
-     * Modifier Ingridiant de plat dant la base de donnée
-     *
-     * @version 0.1
-     * @param idIngr identifiant ingredient
-     * @param nom Nouveau nom de l'ingredient
-     * @param quantity Nouveau quantité  de l'ingrdiant
-     * @param unity Nouveau unity
-     */
-    public void setIngridiant(int idIngr,String nom,int quantity,String unity){
-        Toast.makeText(Ingridiant.this,"Ingrediant est bien modifier",Toast.LENGTH_LONG);
-    }
-
-    /**
-     * Supprimer ingredient dant la base de donnée
-     *
-     * @version 0.1
-     * @param idIngr identifiant ingredient
-     */
-    public void deletIngridiant(int idIngr){
-        Toast.makeText(Ingridiant.this,"Ingrediant est bien supprimer",Toast.LENGTH_LONG);
     }
 
     /**
@@ -409,7 +376,6 @@ public class Ingridiant extends AppCompatActivity {
 
                     Items.remove(position);
                     myadpter.notifyDataSetChanged();
-                    deletIngridiant(0);
                 }
             });
 

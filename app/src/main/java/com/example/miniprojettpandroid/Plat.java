@@ -140,7 +140,7 @@ public class Plat extends AppCompatActivity {
             idRepas = Integer.parseInt(extras.getString("id"));
 
             int dure = heur.getValue()*60 + minut.getValue();
-            Platt r = new Platt(nomRepas.getText().toString(),"Durée : "+dure+" Min",idRepas);
+            Platt r = new Platt(nomRepas.getText().toString(),dure,idRepas);
             b.insetPlat(r);
 
             setListView();
@@ -285,7 +285,7 @@ public class Plat extends AppCompatActivity {
 
                     Intent activityPlat = new Intent(Plat.this,Ingridiant.class);
                     activityPlat.putExtra("title",title.getText().toString());
-                    activityPlat.putExtra("duree",duree.getText().toString());
+                    activityPlat.putExtra("duree",duree.getText().toString().replaceAll("Durée : ","").replaceAll(" Min",""));
                     activityPlat.putExtra("jour",String.valueOf(numeroJour));
                     activityPlat.putExtra("id",String.valueOf(Items.get(position).idPlat));
                     startActivity(activityPlat);
@@ -307,7 +307,8 @@ public class Plat extends AppCompatActivity {
             });
 
             title.setText(Items.get(position).name);
-            duree.setText(Items.get(position).duree);
+            duree.setText("Durée : "+Items.get(position).duree + " Min");
+
             myadpter.notifyDataSetChanged();
 
             return view;

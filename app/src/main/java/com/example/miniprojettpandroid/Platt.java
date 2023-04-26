@@ -3,16 +3,16 @@ package com.example.miniprojettpandroid;
 public class Platt {
     private int id;
     private String nom;
-    private String dure;
+    private int dure;
     private int idRep;
 
-    public Platt(String nom, String dure, int idRepas) {
+    public Platt(String nom, int dure, int idRepas) {
         this.nom = nom;
         this.dure = dure;
         this.idRep = idRepas;
     }
 
-    public Platt(int id, String nom, String dure) {
+    public Platt(int id, String nom, int dure) {
         this.id = id;
         this.nom = nom;
         this.dure = dure;
@@ -34,11 +34,11 @@ public class Platt {
         this.nom = nom;
     }
 
-    public String getDure() {
+    public int getDure() {
         return dure;
     }
 
-    public void setDure(String dure) {
+    public void setDure(int dure) {
         this.dure = dure;
     }
 
