@@ -22,8 +22,8 @@ public class Bass extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
 
         db.execSQL("CREATE TABLE Rep(_id INTEGER PRIMARY KEY,nom TEXT,  heur TEXT, numjour INTEGER)");
-        db.execSQL("CREATE TABLE Plat(_idP INTEGER PRIMARY KEY,nom TEXT,  dure INTEGER , idRep INTEGER )");
-        db.execSQL("CREATE TABLE ingrediant(_idI INTEGER PRIMARY KEY,nom TEXT,  unity TEXT, quantity INTEGER , idPl INTEGER)");
+        db.execSQL("CREATE TABLE Plat(_idP INTEGER PRIMARY KEY,nom TEXT,  dure INTEGER , idRep INTEGER, FOREIGN KEY (idRep) REFERENCES Rep(_id) ON DELETE CASCADE )");
+        db.execSQL("CREATE TABLE ingrediant(_idI INTEGER PRIMARY KEY,nom TEXT,  unity TEXT, quantity INTEGER , idPl INTEGER, FOREIGN KEY (idPl) REFERENCES Plat(_idP) ON DELETE CASCADE)");
 
     }
 

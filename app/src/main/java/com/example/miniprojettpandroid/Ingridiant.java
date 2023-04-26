@@ -168,11 +168,12 @@ public class Ingridiant extends AppCompatActivity {
      * @version 0.1
      * @param idIngr identifiant ingredient (SELECT * FROM ingredient WHERE id='idIngr')
      */
-    private void openDialog(int idIngr){
+    private void openDialog(int idIngr,int positionItem){
         Dialog dialog = new Dialog(Ingridiant.this,R.style.Dialog_Custom);
         dialog.setContentView(R.layout.dialog_ingredient);
 
         TextView title = (TextView) dialog.findViewById(R.id.title_ingredient_editAdd);
+
         Spinner museur = (Spinner) dialog.findViewById(R.id.spinner_mesur);
         LinearLayout close = (LinearLayout)dialog.findViewById(R.id.close_ingredient);
         LinearLayout save = (LinearLayout)dialog.findViewById(R.id.save_ingredient);
@@ -190,6 +191,9 @@ public class Ingridiant extends AppCompatActivity {
         museur.setAdapter(adapter);
 
         title.setText("Modifié un ingrédient");
+        nomIngredient.setText(Items.get(positionItem).name);
+        quantity.setText(Integer.toString(Items.get(positionItem).quantity));
+
 
         save.setOnClickListener(v1 -> {
 
@@ -226,20 +230,6 @@ public class Ingridiant extends AppCompatActivity {
         dialog.show();
     }
 
-
-    /**
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     * @param
-     */
     private void openDialogPlat(String nom,int heurs,int minuts){
         Dialog dialog = new Dialog(Ingridiant.this,R.style.Dialog_Custom);
         dialog.setContentView(R.layout.dialog_repas);
@@ -253,6 +243,10 @@ public class Ingridiant extends AppCompatActivity {
         LinearLayout linear_edite_text = (LinearLayout)dialog.findViewById(R.id.linear_edite_text);
         TextView titreDialog = (TextView)dialog.findViewById(R.id.textView_repas);
         titreDialog.setText("Modifier le plat");
+
+        nomRepas.setText(extras.getString("title"));
+        heur.setValue(heurs);
+        minut.setValue(minuts);
 
         amOrpm.setMaxValue(0);
         amOrpm.setMinValue(0);
@@ -271,6 +265,7 @@ public class Ingridiant extends AppCompatActivity {
             Toast.makeText(Ingridiant.this,"La modification est bien fait",Toast.LENGTH_LONG);
 
             titleRepas.setText(nomRepas.getText().toString());
+            heurRepas.setText(heur.getValue()+":"+minut.getValue());
 
             Platt r = new Platt(
                     idPlat,
@@ -402,7 +397,7 @@ public class Ingridiant extends AppCompatActivity {
             btnEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    openDialog(Items.get(position).idIngridiant);
+                    openDialog(Items.get(position).idIngridiant,position);
                 }
             });
 

@@ -106,6 +106,7 @@ public class Plat extends AppCompatActivity {
         Dialog dialog = new Dialog(Plat.this,R.style.Dialog_Custom);
         dialog.setContentView(R.layout.dialog_repas);
 
+        TextView title = (TextView) dialog.findViewById(R.id.textView_repas);
         EditText nomRepas = (EditText) dialog.findViewById(R.id.edittext_add_repa);
         NumberPicker heur = (NumberPicker)dialog.findViewById(R.id.edit_repas_heur);
         NumberPicker minut = (NumberPicker)dialog.findViewById(R.id.edit_repas_min);
@@ -115,6 +116,7 @@ public class Plat extends AppCompatActivity {
         LinearLayout linear_edite_text = (LinearLayout)dialog.findViewById(R.id.linear_edite_text);
 
 
+        title.setText("Ajouté un plat");
 
         amOrpm.setMaxValue(0);
         amOrpm.setMinValue(0);
@@ -137,8 +139,8 @@ public class Plat extends AppCompatActivity {
 
             idRepas = Integer.parseInt(extras.getString("id"));
 
-
-            Platt r = new Platt(nomRepas.getText().toString(),heur.getValue()+":"+minut.getValue(),idRepas);
+            int dure = heur.getValue()*60 + minut.getValue();
+            Platt r = new Platt(nomRepas.getText().toString(),"Durée : "+dure+" Min",idRepas);
             b.insetPlat(r);
 
             setListView();
@@ -164,6 +166,7 @@ public class Plat extends AppCompatActivity {
         TextView titreDialog = (TextView)dialog.findViewById(R.id.textView_repas);
         titreDialog.setText("Modifier le repas");
 
+        nomRepas.setText(extras.getString("title"));
 
         amOrpm.setMaxValue(1);
         amOrpm.setMinValue(0);
@@ -227,6 +230,18 @@ public class Plat extends AppCompatActivity {
         myadpter.notifyDataSetChanged();
     }
 
+    public void deletAllChild(int idPlat){
+
+        Cursor c = b.getALLIngrediant(idPlat);
+
+        for(int j = 0; j < c.getCount(); j++){
+            c.moveToNext();
+            int idIngr = c.getInt(c.getColumnIndex("_idI"));
+            b.supprimerIngrediant(idIngr);
+
+        }
+    }
+
     class CustomAdapter extends BaseAdapter {
 
         ArrayList<ListPlat> Items = new ArrayList<ListPlat>();
@@ -282,6 +297,7 @@ public class Plat extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
 
+                    deletAllChild(Items.get(position).idPlat);
                     b.supprimerPlat(Items.get(position).idPlat);
 
                     Items.remove(position);

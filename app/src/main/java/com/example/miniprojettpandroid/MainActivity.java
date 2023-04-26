@@ -224,6 +224,26 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void deletAllChild(int idRepas){
+        Cursor c = b.getALLPlat(idRepas);
+        Cursor listIngridiant = null;
+
+        for (int i = 0; i < c.getCount(); i++) {
+
+            c.moveToNext();
+            int id = c.getInt(c.getColumnIndex("_idP"));
+            b.supprimerPlat(id);
+
+            listIngridiant = b.getALLIngrediant(id);
+            for(int j = 0; j < listIngridiant.getCount(); j++){
+                listIngridiant.moveToNext();
+                int idIngr = c.getInt(c.getColumnIndex("_idI"));
+                b.supprimerIngrediant(idIngr);
+
+            }
+        }
+    }
+
     class MyCustomAdapter extends BaseAdapter{
 
         ArrayList<ListRepas> Items = new ArrayList<ListRepas>();
@@ -252,7 +272,6 @@ public class MainActivity extends AppCompatActivity {
 
             TextView title = (TextView) view.findViewById(R.id.tilte_item);
             TextView heur = (TextView) view.findViewById(R.id.label_time_item);
-            TextView idItemBdd = (TextView) view.findViewById(R.id.idItemBdd);
             LinearLayout btnEdit = (LinearLayout) view.findViewById(R.id.edit_item);
             LinearLayout btnRemove = (LinearLayout) view.findViewById(R.id.remove_item);
 
@@ -281,10 +300,12 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
 
+                    deletAllChild(Items.get(position).idRepas);
                     b.supprimerRep(Items.get(position).idRepas);
                     Items.remove(position);
                     myadpter.notifyDataSetChanged();
                     Toast.makeText(MainActivity.this,"Element est bien suppermier",Toast.LENGTH_LONG).show();
+
                 }
             });
 
