@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Dialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -19,16 +20,19 @@ import com.shawnlin.numberpicker.NumberPicker;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
 
 public class Plat extends AppCompatActivity {
 
-    TextView titleRepas,heurRepas;
+    TextView titleRepas,heurRepas,grandTitreActivity;
     LinearLayout editRepas,btnAdd,listJour,selected;
     ArrayList<ListPlat> Items;
     CustomAdapter myadpter;
     ListView listPlat;
     Bundle extras;
     int numeroJour;
+    int idRepas;
+    Bass b = new Bass(Plat.this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +41,8 @@ public class Plat extends AppCompatActivity {
 
         titleRepas = (TextView) findViewById(R.id.titre_repas_edit);
         heurRepas = (TextView) findViewById(R.id.heur_reap_edit);
+        grandTitreActivity = (TextView) findViewById(R.id.grandTitreActivity);
+        grandTitreActivity.setText("List des plats");
         btnAdd = (LinearLayout) findViewById(R.id.btnAdd);
         editRepas = (LinearLayout) findViewById(R.id.edit_repas);
 
@@ -47,9 +53,14 @@ public class Plat extends AppCompatActivity {
 
         titleRepas.setText(extras.getString("title"));
         heurRepas.setText(extras.getString("heur"));
+
+        idRepas = Integer.parseInt(extras.getString("id"));
+
         numeroJour = Integer.parseInt(extras.getString("jour"));
         selected = (LinearLayout) listJour.getChildAt(numeroJour);
-        selected.setBackgroundResource(R.drawable.button_background_primary);
+        selected.setBackgroundResource(R.drawable.button_background_seconde);
+
+
 
         //configuration de listview
         Items = new ArrayList<ListPlat>();
@@ -60,7 +71,7 @@ public class Plat extends AppCompatActivity {
 
 
         //charger les repas dant la base de donnée et affichier dant listView
-        setListView();
+        //setListView();
 
 
         btnAdd.setOnClickListener(new View.OnClickListener() {
@@ -84,9 +95,14 @@ public class Plat extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onStart () {
+        super.onStart();
+        Log.i("salim","Coucoucoucocucocuc");
+        setListView();
+    }
+
     private void openDialog(){
-        int heurUtilisateur = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        int minutUtilisateur = Calendar.getInstance().get(Calendar.MINUTE);
         Dialog dialog = new Dialog(Plat.this,R.style.Dialog_Custom);
         dialog.setContentView(R.layout.dialog_repas);
 
@@ -105,8 +121,7 @@ public class Plat extends AppCompatActivity {
         String[] textValues = {"Min"};
         amOrpm.setDisplayedValues(textValues);
 
-        heur.setValue(heurUtilisateur);
-        minut.setValue(minutUtilisateur);
+        int minutTotal = heur.getValue()*60+minut.getValue();
 
         dialog.show();
 
@@ -119,8 +134,15 @@ public class Plat extends AppCompatActivity {
                 linear_edite_text.setBackgroundResource(R.drawable.edit_background_red);
                 return;
             }
-            Items.add(new ListPlat(nomRepas.getText().toString(),heur.getValue()+":"+minut.getValue()));
-            myadpter.notifyDataSetChanged();
+
+            idRepas = Integer.parseInt(extras.getString("id"));
+
+
+            Platt r = new Platt(nomRepas.getText().toString(),heur.getValue()+":"+minut.getValue(),idRepas);
+            b.insetPlat(r);
+
+            setListView();
+
             dialog.dismiss();
         });
     }
@@ -141,7 +163,7 @@ public class Plat extends AppCompatActivity {
         LinearLayout linear_edite_text = (LinearLayout)dialog.findViewById(R.id.linear_edite_text);
         TextView titreDialog = (TextView)dialog.findViewById(R.id.textView_repas);
         titreDialog.setText("Modifier le repas");
-        nomRepas.setText(nom);
+
 
         amOrpm.setMaxValue(1);
         amOrpm.setMinValue(0);
@@ -158,7 +180,20 @@ public class Plat extends AppCompatActivity {
         });
 
         save.setOnClickListener(v1 -> {
-            Toast.makeText(Plat.this,"La modification est bien fait",3000);
+
+            if(nomRepas.getText().toString().trim().isEmpty()){
+                linear_edite_text.setBackgroundResource(R.drawable.edit_background_red);
+                return;
+            }
+
+            Toast.makeText(Plat.this,"La modification est bien fait",Toast.LENGTH_LONG);
+            titleRepas.setText(nomRepas.getText().toString());
+            Repas r = new Repas(
+                    idRepas,
+                    nomRepas.getText().toString(),
+                    heur.getValue()+":"+minut.getValue()
+            );
+            b.modifier(r);
             dialog.dismiss();
         });
     }
@@ -167,9 +202,28 @@ public class Plat extends AppCompatActivity {
     //cet Method doit etre modifier et adapte pour la base de donnée
     // enva fair un information fausse
     public void setListView(){
-        Items.add(new ListPlat("Lait au chocalate","5 min"));
-        Items.add(new ListPlat("Croissant","30 min"));
-        Items.add(new ListPlat("Confiture à la frais","50 min"));
+
+        //this.getDatabasePath("plat").getAbsolutePath();
+        Items.removeAll(Items);
+
+        idRepas = Integer.parseInt(extras.getString("id"));
+        Log.i("salimPlat", String.valueOf(idRepas));
+
+        Cursor c = b.getALLPlat(idRepas);
+
+        for (int i = 0; i < c.getCount(); i++) {
+
+            // Position the cursor
+            c.moveToNext();
+
+            // Fetch your data values
+            int id = c.getInt(c.getColumnIndex("_idP"));
+            String nom = c.getString(c.getColumnIndex("nom"));
+            String cat = c.getString(c.getColumnIndex("dure"));
+
+            Items.add(new ListPlat(nom,cat,id));
+        }
+
         myadpter.notifyDataSetChanged();
     }
 
@@ -207,29 +261,32 @@ public class Plat extends AppCompatActivity {
             btnEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
+                    //Pour réglage d'un bug
+                    if(Items.get(position).idPlat==0){
+                        setListView();
+                        Log.e("salim", String.valueOf(Items.get(position).idPlat));
+                    }
+
                     Intent activityPlat = new Intent(Plat.this,Ingridiant.class);
                     activityPlat.putExtra("title",title.getText().toString());
                     activityPlat.putExtra("duree",duree.getText().toString());
                     activityPlat.putExtra("jour",String.valueOf(numeroJour));
+                    activityPlat.putExtra("id",String.valueOf(Items.get(position).idPlat));
                     startActivity(activityPlat);
                 }
             });
 
-            btnRemove.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Items.remove(position);
-                    myadpter.notifyDataSetChanged();
-                    Toast.makeText(Plat.this,"Element est bien suppermier",3000).show();
-                }
-            });
 
             btnRemove.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
+                    b.supprimerPlat(Items.get(position).idPlat);
+
                     Items.remove(position);
                     myadpter.notifyDataSetChanged();
-                    Toast.makeText(Plat.this,"Element est bien suppermier",3000).show();
+                    Toast.makeText(Plat.this,"Element est bien suppermier",Toast.LENGTH_LONG).show();
                 }
             });
 

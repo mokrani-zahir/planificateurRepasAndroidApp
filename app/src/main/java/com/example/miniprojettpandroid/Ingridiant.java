@@ -3,7 +3,9 @@ package com.example.miniprojettpandroid;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Dialog;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -18,15 +20,18 @@ import android.widget.Toast;
 import com.shawnlin.numberpicker.NumberPicker;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Ingridiant extends AppCompatActivity {
 
-    TextView titleRepas,heurRepas;
+    TextView titleRepas,heurRepas,grandTitreActivity;
     LinearLayout editRepas,btnAdd,listJour,selected;
     ArrayList<ListIngridiant> Items;
     CustomAdapter myadpter;
     ListView listPlat;
     Bundle extras;
+    int idPlat;
+    Bass b = new Bass(Ingridiant.this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +40,10 @@ public class Ingridiant extends AppCompatActivity {
 
         titleRepas = (TextView) findViewById(R.id.titre_repas_edit);
         heurRepas = (TextView) findViewById(R.id.heur_reap_edit);
+
+        grandTitreActivity = (TextView) findViewById(R.id.grandTitreActivity);
+        grandTitreActivity.setText("List des ingrediant");
+
         btnAdd = (LinearLayout) findViewById(R.id.btnAdd);
         editRepas = (LinearLayout) findViewById(R.id.edit_repas);
 
@@ -45,8 +54,10 @@ public class Ingridiant extends AppCompatActivity {
 
         titleRepas.setText(extras.getString("title"));
         heurRepas.setText(extras.getString("duree"));
+        idPlat = Integer.parseInt(extras.getString("id"));
+
         selected = (LinearLayout) listJour.getChildAt(Integer.parseInt(extras.getString("jour")));
-        selected.setBackgroundResource(R.drawable.button_background_primary);
+        selected.setBackgroundResource(R.drawable.button_background_seconde);
 
         //configuration de listview
         Items = new ArrayList<ListIngridiant>();
@@ -70,12 +81,22 @@ public class Ingridiant extends AppCompatActivity {
         editRepas.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                String[] heur = extras.getString("duree").split(":");
+                openDialogPlat(
+                        extras.getString("title").toString(),
+                        Integer.parseInt(heur[0]),
+                        Integer.parseInt(heur[1])
+                );
             }
         });
 
     }
 
+    /**
+     * Affichier une dialog (pop up) pour ajouter un ingridiant
+     * Utiliser la method putIngridiant()
+     *
+     */
     private void openDialog(){
         Dialog dialog = new Dialog(Ingridiant.this,R.style.Dialog_Custom);
         dialog.setContentView(R.layout.dialog_ingredient);
@@ -90,11 +111,15 @@ public class Ingridiant extends AppCompatActivity {
         LinearLayout linea_edit_quantity = (LinearLayout) dialog.findViewById(R.id.linear_quantity);
         EditText quantity = (EditText) dialog.findViewById(R.id.editText_quantity);
 
+
+        //pour adapter le Spinner pour le desgin
         ArrayAdapter adapter = ArrayAdapter.createFromResource(Ingridiant.this,R.array.spinner_items,R.layout.color_spinner_layout);
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_layout);
         museur.setAdapter(adapter);
 
         save.setOnClickListener(v1 -> {
+
+
 
             if(nomIngredient.getText().toString().trim().isEmpty()){
                 linea_edit_ingredient.setBackgroundResource(R.drawable.edit_background_red);
@@ -106,8 +131,22 @@ public class Ingridiant extends AppCompatActivity {
                 return;
             }
 
-            Items.add(new ListIngridiant(nomIngredient.getText().toString(),"60",museur.getSelectedItem().toString()));
-            myadpter.notifyDataSetChanged();
+            Log.i("salim","click save");
+
+            idPlat = Integer.parseInt(extras.getString("id"));
+            Log.i("salim","idPlat : "+idPlat);
+
+
+            Ingrediants r = new Ingrediants(
+                    nomIngredient.getText().toString(),
+                    museur.getSelectedItem().toString(),
+                    Integer.parseInt(quantity.getText().toString()),
+                    idPlat);
+
+            b.insetIngrediant(r);
+
+            setListView();
+
             dialog.dismiss();
         });
 
@@ -121,7 +160,87 @@ public class Ingridiant extends AppCompatActivity {
     //donne cette method en a busoi seulement ID de element puis enva recuper dant la base de donnée
     //Donc apre il sura private void openDialog(int identifiant)
 
-    private void openDialog(String nom,int heurs,int minuts){
+    /**
+     * Affichier une dialog (pop up) pour modifier un ingridiant
+     * Recuper les proprité de ingridiant dant la base de donnée et affichier dant EditText et Spinner
+     * Utiliser la method setIngridiant()
+     *
+     * @version 0.1
+     * @param idIngr identifiant ingredient (SELECT * FROM ingredient WHERE id='idIngr')
+     */
+    private void openDialog(int idIngr){
+        Dialog dialog = new Dialog(Ingridiant.this,R.style.Dialog_Custom);
+        dialog.setContentView(R.layout.dialog_ingredient);
+
+        TextView title = (TextView) dialog.findViewById(R.id.title_ingredient_editAdd);
+        Spinner museur = (Spinner) dialog.findViewById(R.id.spinner_mesur);
+        LinearLayout close = (LinearLayout)dialog.findViewById(R.id.close_ingredient);
+        LinearLayout save = (LinearLayout)dialog.findViewById(R.id.save_ingredient);
+
+        LinearLayout linea_edit_ingredient = (LinearLayout) dialog.findViewById(R.id.linear_ingredient);
+        EditText nomIngredient = (EditText) dialog.findViewById(R.id.editText_ingredient);
+
+        LinearLayout linea_edit_quantity = (LinearLayout) dialog.findViewById(R.id.linear_quantity);
+        EditText quantity = (EditText) dialog.findViewById(R.id.editText_quantity);
+
+
+        //pour adapter le Spinner pour le desgin
+        ArrayAdapter adapter = ArrayAdapter.createFromResource(Ingridiant.this,R.array.spinner_items,R.layout.color_spinner_layout);
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_layout);
+        museur.setAdapter(adapter);
+
+        title.setText("Modifié un ingrédient");
+
+        save.setOnClickListener(v1 -> {
+
+            if(nomIngredient.getText().toString().trim().isEmpty()){
+                linea_edit_ingredient.setBackgroundResource(R.drawable.edit_background_red);
+                return;
+            }
+
+            if(quantity.getText().toString().trim().isEmpty()){
+                linea_edit_quantity.setBackgroundResource(R.drawable.edit_background_red);
+                return;
+            }
+
+            Ingrediants r = new Ingrediants(
+                    idIngr,
+                    nomIngredient.getText().toString(),
+                    museur.getSelectedItem().toString(),
+                    Integer.parseInt(quantity.getText().toString())
+            );
+
+            b.modifierIngrediant(r);
+
+            setListView();
+
+
+
+            dialog.dismiss();
+        });
+
+        close.setOnClickListener(v1 -> {
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+
+    /**
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     * @param
+     */
+    private void openDialogPlat(String nom,int heurs,int minuts){
         Dialog dialog = new Dialog(Ingridiant.this,R.style.Dialog_Custom);
         dialog.setContentView(R.layout.dialog_repas);
 
@@ -133,16 +252,14 @@ public class Ingridiant extends AppCompatActivity {
         LinearLayout close = (LinearLayout)dialog.findViewById(R.id.close_add_repa);
         LinearLayout linear_edite_text = (LinearLayout)dialog.findViewById(R.id.linear_edite_text);
         TextView titreDialog = (TextView)dialog.findViewById(R.id.textView_repas);
-        titreDialog.setText("Modifier le repas");
-        nomRepas.setText(nom);
+        titreDialog.setText("Modifier le plat");
 
-        amOrpm.setMaxValue(1);
+        amOrpm.setMaxValue(0);
         amOrpm.setMinValue(0);
-        String[] textValues = {"AM", "PM"};
+        String[] textValues = {"Min"};
         amOrpm.setDisplayedValues(textValues);
 
-        heur.setValue(heurs);
-        minut.setValue(minuts);
+        int minutTotal = heur.getValue()*60+minut.getValue();
 
         dialog.show();
 
@@ -151,25 +268,106 @@ public class Ingridiant extends AppCompatActivity {
         });
 
         save.setOnClickListener(v1 -> {
-            Toast.makeText(Ingridiant.this,"La modification est bien fait",3000);
+            Toast.makeText(Ingridiant.this,"La modification est bien fait",Toast.LENGTH_LONG);
+
+            titleRepas.setText(nomRepas.getText().toString());
+
+            Platt r = new Platt(
+                    idPlat,
+                    nomRepas.getText().toString(),
+                    heur.getValue()+":"+minut.getValue()
+            );
+            b.modifierPlat(r);
+
             dialog.dismiss();
         });
     }
-
-    //Pour charger dant la base de donnée direct les list dant listView
+    //Pour charger dant la base de donnée direct les list dant listView pre ouvreteur de activity (page ou application)
     //cet Method doit etre modifier et adapte pour la base de donnée
     // enva fair un information fausse
+    //setListView(int identiterPlat) puis recuper la list ingridiant et affichier sur listView
+
+    /**
+     * chercher ingridiant de plat dant bas de donnée et affichier dant la listView
+     *
+     * @version 0.1
+     * @param id identifiant de plat (SELECT * FROM ingridiant WHERE idPlat='id')
+     * @return void puis ecreer une boucle ajouter a la arry list puis affichier
+     */
     public void setListView(){
-        Items.add(new ListIngridiant("Farin","500","g"));
-        Items.add(new ListIngridiant("Levure séche","10","g"));
-        Items.add(new ListIngridiant("Surce","60","g"));
-        Items.add(new ListIngridiant("Sel","10","g"));
-        Items.add(new ListIngridiant("Lait","200","ml"));
-        Items.add(new ListIngridiant("Oeufs","2",""));
-        Items.add(new ListIngridiant("Beurre","200","g"));
+        //Items.add(new ListIngridiant("Farin",500,"g"));
+        Items.removeAll(Items);
+
+        idPlat = Integer.parseInt(extras.getString("id"));
+        Log.i("salimPlat", String.valueOf(idPlat));
+
+        Cursor c = b.getALLIngrediant(idPlat);
+
+        for (int i = 0; i < c.getCount(); i++) {
+
+            // Position the cursor
+            c.moveToNext();
+
+            // Fetch your data values
+            int ids = c.getInt(c.getColumnIndex("_idI"));
+            String nom = c.getString(c.getColumnIndex("nom"));
+            int qua = c.getInt(c.getColumnIndex("quantity"));
+            String museur = c.getString(c.getColumnIndex("unity"));
+
+            Items.add(new ListIngridiant(nom,qua,museur,ids));
+        }
+
+        Log.e("salim", String.valueOf(Items.size()));
+
         myadpter.notifyDataSetChanged();
     }
 
+
+    /**
+     * Ajouter ingridiant au plat dant la base de donnée
+     *
+     * @version 0.1
+     * @param nom Nome de plat
+     * @param quantity Quantité de ingridiant
+     * @param unity Unité de mesure
+     * @param idPlat identifiant de plat a associer (Clé etrangere)
+     * @return void puis ecreer une boucle ajouter a la arry list puis affichier
+     */
+    public void putIngridiant(String nom,int quantity,String unity,int idPlat){
+        //Items.add(new ListIngridiant(nom,quantity,unity));
+        myadpter.notifyDataSetChanged();
+        Toast.makeText(Ingridiant.this,"Ingrediant est bien ajouter",Toast.LENGTH_LONG);
+    }
+
+    /**
+     * Modifier Ingridiant de plat dant la base de donnée
+     *
+     * @version 0.1
+     * @param idIngr identifiant ingredient
+     * @param nom Nouveau nom de l'ingredient
+     * @param quantity Nouveau quantité  de l'ingrdiant
+     * @param unity Nouveau unity
+     */
+    public void setIngridiant(int idIngr,String nom,int quantity,String unity){
+        Toast.makeText(Ingridiant.this,"Ingrediant est bien modifier",Toast.LENGTH_LONG);
+    }
+
+    /**
+     * Supprimer ingredient dant la base de donnée
+     *
+     * @version 0.1
+     * @param idIngr identifiant ingredient
+     */
+    public void deletIngridiant(int idIngr){
+        Toast.makeText(Ingridiant.this,"Ingrediant est bien supprimer",Toast.LENGTH_LONG);
+    }
+
+    /**
+     * C'est une classe pour adapter comportement des items dant la listView
+     *
+     * @author Mokrani Zahir
+     * @version 1.0
+     */
     class CustomAdapter extends BaseAdapter {
 
         ArrayList<ListIngridiant> Items = new ArrayList<ListIngridiant>();
@@ -204,34 +402,24 @@ public class Ingridiant extends AppCompatActivity {
             btnEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //Intent activityPlat = new Intent(MainActivity.this,Plat.class);
-                    //activityPlat.putExtra("title",title.getText().toString());
-                    //activityPlat.putExtra("heur",heur.getText().toString());
-                    //activityPlat.putExtra("jour",String.valueOf(numeroJour));
-                    //startActivity(activityPlat);
+                    openDialog(Items.get(position).idIngridiant);
                 }
             });
 
             btnRemove.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Items.remove(position);
-                    myadpter.notifyDataSetChanged();
-                    Toast.makeText(Ingridiant.this,"Element est bien suppermier",3000).show();
-                }
-            });
 
-            btnRemove.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+                    b.supprimerIngrediant(Items.get(position).idIngridiant);
+
                     Items.remove(position);
                     myadpter.notifyDataSetChanged();
-                    Toast.makeText(Ingridiant.this,"Element est bien suppermier",3000).show();
+                    deletIngridiant(0);
                 }
             });
 
             title.setText(Items.get(position).name);
-            duree.setText(Items.get(position).quantity);
+            duree.setText(Items.get(position).quantity + " " + Items.get(position).museur);
             myadpter.notifyDataSetChanged();
 
             return view;

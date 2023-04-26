@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Dialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -19,6 +20,7 @@ import com.shawnlin.numberpicker.NumberPicker;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -29,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<ListRepas> Items;
     MyCustomAdapter myadpter;
     int numeroJour;
-
+    String id;
+    Bass b = new Bass(MainActivity.this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         btnVen = (LinearLayout) findViewById(R.id.btnVen);
         btnSam = (LinearLayout) findViewById(R.id.btnSam);
         btnAdd = (LinearLayout) findViewById(R.id.btnAdd);
+
         numeroJour = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) -1;
 
         //pour selection le jour et changer sont background pour affichier au utlisateur
@@ -59,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         listRepas.setAdapter(myadpter);
 
         //charger les repas dant la base de donnée et affichier dant listView
-        setListView();
+        //setListView();
 
 
         btnDim.setOnClickListener(new View.OnClickListener() {
@@ -127,6 +131,12 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onStart () {
+        super.onStart();
+        setListView();
+    }
+
     private void changeSelectionJour(LinearLayout element){
         int count = listJour.getChildCount();
         for (int i = 0; i < count; i++) {
@@ -136,11 +146,14 @@ public class MainActivity extends AppCompatActivity {
         }
         element.setBackgroundResource(R.drawable.button_background_primary);
         numeroJour = listJour.indexOfChild(element);
+        setListView();
     }
 
     private void openDialog(){
         int heurUtilisateur = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         int minutUtilisateur = Calendar.getInstance().get(Calendar.MINUTE);
+
+
         Dialog dialog = new Dialog(MainActivity.this,R.style.Dialog_Custom);
         dialog.setContentView(R.layout.dialog_repas);
 
@@ -173,8 +186,14 @@ public class MainActivity extends AppCompatActivity {
                 linear_edite_text.setBackgroundResource(R.drawable.edit_background_red);
                 return;
             }
-            Items.add(new ListRepas(nomRepas.getText().toString(),heur.getValue()+":"+minut.getValue()));
-            myadpter.notifyDataSetChanged();
+
+
+            //ajouter
+            Repas r = new Repas(nomRepas.getText().toString(),heur.getValue()+":"+minut.getValue(),numeroJour);
+            b.insetRep(r);
+
+            setListView();
+
             dialog.dismiss();
         });
     }
@@ -183,11 +202,26 @@ public class MainActivity extends AppCompatActivity {
     //cet Method doit etre modifier et adapte pour la base de donnée
     // enva fair un information fausse
     public void setListView(){
-        Items.add(new ListRepas("Matin","07:00"));
-        Items.add(new ListRepas("Midi","12:00"));
-        Items.add(new ListRepas("Collation","16:00"));
-        Items.add(new ListRepas("Soir","19:00"));
+
+        Items.removeAll(Items);
+
+        Cursor c = b.getALLg(numeroJour);
+
+        for (int i = 0; i < c.getCount(); i++) {
+
+            // Position the cursor
+            c.moveToNext();
+
+            // Fetch your data values
+            int id = c.getInt(c.getColumnIndex("_id"));
+            String nom = c.getString(c.getColumnIndex("nom"));
+            String cat = c.getString(c.getColumnIndex("heur"));
+            Items.add(new ListRepas(nom,cat,id));
+        }
+
         myadpter.notifyDataSetChanged();
+
+
     }
 
     class MyCustomAdapter extends BaseAdapter{
@@ -218,37 +252,42 @@ public class MainActivity extends AppCompatActivity {
 
             TextView title = (TextView) view.findViewById(R.id.tilte_item);
             TextView heur = (TextView) view.findViewById(R.id.label_time_item);
+            TextView idItemBdd = (TextView) view.findViewById(R.id.idItemBdd);
             LinearLayout btnEdit = (LinearLayout) view.findViewById(R.id.edit_item);
             LinearLayout btnRemove = (LinearLayout) view.findViewById(R.id.remove_item);
 
             btnEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
+                    //Pour réglage d'un bug
+                    if(Items.get(position).idRepas==0){
+                        setListView();
+                    }
+
+
                     Intent activityPlat = new Intent(MainActivity.this,Plat.class);
+                    activityPlat.putExtra("id",String.valueOf(Items.get(position).idRepas));
                     activityPlat.putExtra("title",title.getText().toString());
                     activityPlat.putExtra("heur",heur.getText().toString());
                     activityPlat.putExtra("jour",String.valueOf(numeroJour));
+
                     startActivity(activityPlat);
+
                 }
             });
 
             btnRemove.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
+                    b.supprimerRep(Items.get(position).idRepas);
                     Items.remove(position);
                     myadpter.notifyDataSetChanged();
-                    Toast.makeText(MainActivity.this,"Element est bien suppermier",3000).show();
+                    Toast.makeText(MainActivity.this,"Element est bien suppermier",Toast.LENGTH_LONG).show();
                 }
             });
 
-            btnRemove.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Items.remove(position);
-                    myadpter.notifyDataSetChanged();
-                    Toast.makeText(MainActivity.this,"Element est bien suppermier",3000).show();
-                }
-            });
 
             title.setText(Items.get(position).name);
             heur.setText(Items.get(position).heur);
